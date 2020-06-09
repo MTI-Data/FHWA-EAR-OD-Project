@@ -1,0 +1,1 @@
+The code checks relationships between consecutive points by a device to identify which points belong to the same trip. The code uses point files and adds a column of trip ID to the point file based on a set of rules identified for points belonging to the same trip.

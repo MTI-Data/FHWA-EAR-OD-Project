@@ -1,0 +1,327 @@
+
+---
+
+Launch the libraries
+```{r}
+library(data.table)
+library(rgdal)
+library(bit64)
+library(dplyr)
+```
+
+Read the required datasets
+```{r}
+device <- fread("Device_File_Directory")
+acs <- fread("ACS_Input_Directory")
+```
+
+```{r}
+device <- device[device$Category=="HOME",]
+colnames(device)[5] <- "FIPS"
+
+device$FIPS <- as.character(device$FIPS)
+device$FIPS[nchar(device$FIPS)==11] = paste0("0",device$FIPS[nchar(device$FIPS)==11])
+```
+
+Add the FIPS for the rows to the ACS dataset
+```{r}
+a <- strsplit(acs$GISJOIN, split = "")
+b <- do.call(rbind.data.frame, a)
+colnames(b) <- c(1:15)
+b$FIPS <- do.call(paste, c(b[,c(2:3,5:7, 9:15)], sep=""))
+acs$FIPS <- b$FIPS
+rm(a)
+rm(b)
+```
+
+Keep only those columns that you need! Here age, gender.
+```{r}
+acs_age <- acs[,c("FIPS", "AJWBE001","AJWBE002","AJWBE003","AJWBE004","AJWBE005",
+                        "AJWBE006","AJWBE007","AJWBE008","AJWBE009","AJWBE010",
+                        "AJWBE011","AJWBE012","AJWBE013","AJWBE014","AJWBE015",
+                        "AJWBE016","AJWBE017","AJWBE018","AJWBE019","AJWBE020",
+                        "AJWBE021","AJWBE022","AJWBE023","AJWBE024","AJWBE025",
+                        "AJWBE026","AJWBE027","AJWBE028","AJWBE029","AJWBE030",
+                        "AJWBE031","AJWBE032","AJWBE033","AJWBE034","AJWBE035",
+                        "AJWBE036","AJWBE037","AJWBE038","AJWBE039","AJWBE040",
+                        "AJWBE041","AJWBE042","AJWBE043","AJWBE044","AJWBE045",
+                        "AJWBE046","AJWBE047","AJWBE048","AJWBE049")]
+```
+
+
+
+Clean the age dataset:
+```{r}
+acs_age$TOTAL <- acs_age[, "AJWBE001"]
+acs_age$MTOTAL <- acs_age[, "AJWBE002"]
+acs_age$FTOTAL <- acs_age[, "AJWBE026"]
+
+acs_age$MUNDER35 <- acs_age[, "AJWBE003"] + acs_age[, "AJWBE004"] + acs_age[, "AJWBE005"] +
+                    acs_age[, "AJWBE006"] + acs_age[, "AJWBE007"] + acs_age[, "AJWBE008"] + 
+                    acs_age[, "AJWBE009"] + acs_age[, "AJWBE010"] + acs_age[, "AJWBE011"] +acs_age[, "AJWBE012"]
+
+acs_age$M35TO65 <-  acs_age[, "AJWBE013"] + acs_age[, "AJWBE014"] + acs_age[, "AJWBE015"] + acs_age[, "AJWBE016"] + 
+                    acs_age[, "AJWBE017"] + acs_age[, "AJWBE018"] + acs_age[, "AJWBE019"]
+
+acs_age$MOLDER65 <- acs_age[, "AJWBE020"] + acs_age[, "AJWBE021"] + acs_age[, "AJWBE022"] +
+                    acs_age[, "AJWBE023"] + acs_age[, "AJWBE024"] + acs_age[, "AJWBE025"]
+
+acs_age$FUNDER35 <- acs_age[, "AJWBE027"] + acs_age[, "AJWBE028"] + acs_age[, "AJWBE029"] +
+                    acs_age[, "AJWBE030"] + acs_age[, "AJWBE031"] + acs_age[, "AJWBE032"] + 
+                    acs_age[, "AJWBE033"] + acs_age[, "AJWBE034"] + acs_age[, "AJWBE035"] + acs_age[, "AJWBE036"]
+
+acs_age$F35TO65 <-  acs_age[, "AJWBE037"] + acs_age[, "AJWBE038"] + acs_age[, "AJWBE039"] + acs_age[, "AJWBE040"] +
+                    acs_age[, "AJWBE041"] + acs_age[, "AJWBE042"] + acs_age[, "AJWBE043"]
+
+acs_age$FOLDER65 <- acs_age[, "AJWBE044"] + acs_age[, "AJWBE045"] + acs_age[, "AJWBE046"] +
+                    acs_age[, "AJWBE047"] + acs_age[, "AJWBE048"] +acs_age[, "AJWBE049"]
+
+
+acs_age <- acs_age[, c("FIPS", "TOTAL", "MTOTAL", "FTOTAL", "MUNDER35", "M35TO65", "MOLDER65", "FUNDER35", "F35TO65", "FOLDER65")]
+
+
+acs_age$MTOTALW <- acs_age$MTOTAL / acs_age$TOTAL
+acs_age$FTOTALW <- acs_age$FTOTAL / acs_age$TOTAL
+acs_age$MUNDER35W <- acs_age$MUNDER35 / acs_age$TOTAL
+acs_age$M35TO65W <- acs_age$M35TO65 / acs_age$TOTAL
+acs_age$MOLDER65W <- acs_age$MOLDER65 / acs_age$TOTAL
+acs_age$FUNDER35W <- acs_age$FUNDER35 / acs_age$TOTAL
+acs_age$F35TO65W <- acs_age$F35TO65 / acs_age$TOTAL
+acs_age$FOLDER65W <- acs_age$FOLDER65 / acs_age$TOTAL
+
+
+acs_age$MTOTALW[acs_age$TOTAL==0] <- 0
+acs_age$FTOTALW[acs_age$TOTAL==0] <- 0
+acs_age$MUNDER35W[acs_age$TOTAL==0] <- 0
+acs_age$M35TO65W[acs_age$TOTAL==0] <- 0
+acs_age$MOLDER65W[acs_age$TOTAL==0] <- 0
+acs_age$FUNDER35W[acs_age$TOTAL==0] <- 0
+acs_age$F35TO65W[acs_age$TOTAL==0] <- 0
+acs_age$FOLDER65W[acs_age$TOTAL==0] <- 0
+
+```
+
+
+Keep only those columns that you need! Here Income.
+```{r}
+acs_income <- acs[,c("FIPS", "AJY9E001", "AJY9E002", "AJY9E003", "AJY9E004", "AJY9E005",
+                    "AJY9E006", "AJY9E007", "AJY9E008", "AJY9E009", "AJY9E010",
+                    "AJY9E011", "AJY9E012", "AJY9E013", "AJY9E014", "AJY9E015",
+                    "AJY9E016", "AJY9E017")]
+
+acs_income <- acs_income %>%
+  mutate(BELOW20 = (AJY9E002 + AJY9E003 + AJY9E004)/AJY9E001,
+         
+         BETWEEN20_50 = (AJY9E005 + AJY9E006 + AJY9E007 + AJY9E008 + AJY9E009 + AJY9E010) / AJY9E001,
+         
+         BETWEEN75_100 = (AJY9E011 + AJY9E012 + AJY9E013) / AJY9E001,
+         
+         ABOVE_100 = (AJY9E014 + AJY9E015 + AJY9E016 + AJY9E017)/AJY9E001)
+
+acs_income$TOTALINCOME <- acs_income$AJY9E001
+
+acs_income <- acs_income %>%
+  select(FIPS, TOTALINCOME, BELOW25, BETWEEN25_50, BETWEEN50_100, ABOVE_100)
+
+acs_income$BELOW20W <- acs_income$BELOW20 / acs_income$TOTALINCOME
+acs_income$BETWEEN20_50W <- acs_income$BETWEEN20_50 / acs_income$TOTALINCOME
+acs_income$BETWEEN75_100W <- acs_income$BETWEEN75_100 / acs_income$TOTALINCOME
+acs_income$ABOVE_100W <- acs_income$ABOVE_100 / acs_income$TOTALINCOME
+
+
+acs_income$BELOW20W[acs_income$TOTALINCOME==0] <- 0
+acs_income$BETWEEN20_50W[acs_income$TOTALINCOME==0] <- 0
+acs_income$BETWEEN75_100W[acs_income$TOTALINCOME==0] <- 0
+acs_income$ABOVE_100W[acs_income$TOTALINCOME==0] <- 0
+```
+
+
+Make them in order.
+```{r}
+device$FIPS <- as.character(device$FIPS)
+device <- device[order(device$FIPS),]
+acs_age <- acs_age[order(acs_age$FIPS),]
+acs_income <- acs_income[order(acs_income$FIPS),]
+```
+
+
+Age Assignment Function:
+```{r}
+age_assignment <- function(myFIPS){
+  tmp_device <- device[device$FIPS==myFIPS,]
+  tmp_age <- acs_age[acs_age$FIPS==myFIPS,]
+  number_device <- nrow(tmp_device)
+  
+  factors <- c(tmp_age$MUNDER35W,
+               tmp_age$M35TO65W,
+               tmp_age$MOLDER65W,
+               tmp_age$FUNDER35W,
+               tmp_age$F35TO65W,
+               tmp_age$FOLDER65W)
+  
+  
+  if (isTRUE(tmp_age[1,2]==0)){
+    tmp_device$AGE <- "NOAGE"
+    tmp_device$GENDER <- "NOGENDER"
+    device_with_age <- tmp_device
+    device_with_age$random_number <- 0
+    return(device_with_age)
+  }else{
+    one <- factors[1]
+    two <- one + factors[2]
+    three <- two + factors[3]
+    four <- three + factors[4]
+    five <- four + factors[5]
+    six <- five + factors[6]
+    
+    random_number <- runif(number_device)
+    random_number <- data.frame(random_number)
+    tmp_device <- cbind(random_number,tmp_device)
+
+    part_1 <- tmp_device[(tmp_device$random_number >= 0) & (tmp_device$random_number < one),]
+    if(nrow(part_1) > 0){
+      part_1$AGE <- "UNDER35"
+      part_1$GENDER <- "MALE"      
+    }
+
+    part_2 <- tmp_device[(tmp_device$random_number >= one) & (tmp_device$random_number < two),]
+    if(nrow(part_2) > 0){
+      part_2$AGE <- "35TO65"
+      part_2$GENDER <- "MALE"      
+    }
+
+    part_3 <- tmp_device[(tmp_device$random_number >= two) & (tmp_device$random_number < three),]
+    if(nrow(part_3) > 0){
+      part_3$AGE <- "OLDER65"
+      part_3$GENDER <- "MALE"      
+    }
+
+    part_4 <- tmp_device[(tmp_device$random_number >= three) & (tmp_device$random_number < four),]
+    if(nrow(part_4) > 0){
+      part_4$AGE <- "UNDER35"
+      part_4$GENDER <- "FEMALE"      
+    }
+
+    part_5 <- tmp_device[(tmp_device$random_number >= four) & (tmp_device$random_number < five),]
+    if(nrow(part_5) > 0){
+      part_5$AGE <- "35TO65"
+      part_5$GENDER <- "FEMALE"      
+    }
+
+    part_6 <- tmp_device[(tmp_device$random_number >= five) & (tmp_device$random_number < six),]
+    if(nrow(part_6) > 0){
+      part_6$AGE <- "OLDER65"
+      part_6$GENDER <- "FEMALE"      
+    }
+   
+    device_with_age <- rbind(part_1, part_2,part_3, part_4, part_5, part_6)
+    return(device_with_age)
+  }  
+  
+}
+```
+
+
+add a column to devices that shows their ages.
+```{r}
+a <- Sys.time()
+unique_FIPS <- unique(device$FIPS)
+unique_FIPS <- as.vector(unique_FIPS)
+
+each_block_group_age <- lapply(unique_FIPS, age_assignment)
+
+device_age <- do.call(rbind.data.frame, each_block_group_age)
+
+b <- Sys.time()
+b-a
+```
+
+
+
+Income Assignment Function:
+```{r}
+income_assignment <- function(myFIPS){
+  tmp_device <- device[device$FIPS==myFIPS,]
+  tmp_income <- acs_income[acs_income$FIPS==myFIPS,]
+  number_device <- nrow(tmp_device)
+  
+  factors <- c(tmp_income$BELOW20W,
+               tmp_income$BETWEEN20_50W,
+               tmp_income$BETWEEN75_100W,
+               tmp_income$ABOVE_100W)
+  
+  
+  if (isTRUE(tmp_income[1,2]==0)){
+    tmp_device$INCOME <- "NOINCOME"
+    device_with_income <- tmp_device
+    device_with_income$random_number <- 0
+    return(device_with_income)
+  }else{
+    one <- factors[1]
+    two <- one + factors[2]
+    three <- two + factors[3]
+    four <- three + factors[4]
+    
+    random_number <- runif(number_device)
+    random_number <- data.frame(random_number)
+    tmp_device <- cbind(random_number,tmp_device)
+
+    part_1 <- tmp_device[(tmp_device$random_number >= 0) & (tmp_device$random_number < one),]
+    if(nrow(part_1) > 0){
+      part_1$INCOME <- "BELOW20"
+    }
+
+    part_2 <- tmp_device[(tmp_device$random_number >= one) & (tmp_device$random_number < two),]
+    if(nrow(part_2) > 0){
+      part_2$INCOME <- "BETWEEN20_50"
+    }
+
+    part_3 <- tmp_device[(tmp_device$random_number >= two) & (tmp_device$random_number < three),]
+    if(nrow(part_3) > 0){
+      part_3$INCOME <- "BETWEEN75_100"
+    }
+
+    part_4 <- tmp_device[(tmp_device$random_number >= three) & (tmp_device$random_number < four),]
+    if(nrow(part_4) > 0){
+      part_4$INCOME <- "ABOVE_100"
+    }
+
+   
+    device_with_income <- rbind(part_1, part_2,part_3, part_4)
+    return(device_with_income)
+  }  
+  
+}
+```
+
+
+add a column to devices that shows their income.
+```{r}
+a <- Sys.time()
+unique_FIPS <- unique(device$FIPS)
+unique_FIPS <- as.vector(unique_FIPS)
+
+each_block_group_income <- lapply(unique_FIPS, income_assignment)
+
+device_income <- do.call(rbind.data.frame, each_block_group_income)
+
+b <- Sys.time()
+b-a
+```
+
+Make everything ready
+```{r}
+device_income <- device_income[order(device_income$Cuebiq_ID),]
+device_age <- device_age[order(device_age$Cuebiq_ID),]
+device <- device[order(device$Cuebiq_ID),]
+
+socio_demo_final <- device
+socio_demo_final$AGE <- device_age$AGE
+socio_demo_final$GENDER <- device_age$GENDER
+socio_demo_final$INCOME <- device_income$INCOME
+```
+
+WRITE IT:
+```{r}
+fwrite(socio_demo_final, "Output_Directory")
+```
