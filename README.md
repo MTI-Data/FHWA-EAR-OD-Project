@@ -8,13 +8,13 @@ The Codes directory structure is as follows:
 
 * Person OD: codes that were developed to produce OD tables for person trips.
   - Data Cleaning: data cleaning R script reads daily raw data and perform the cleaning procedures to raw observations to ensure the quality of data.
-  - Mode Imputation: a set of R and Python scripts to impute travel mode for mobile data locations.
+  - Mode Imputation: a set of R and Python scripts to impute travel mode for trips identified from mobile data location data.
     1. Attribute Extraction: R script to produce attributes for mode imputation.
     2. Distance_Calculation: Python script to calculate distance attributes for mode imputation.
     3. Prediction: Python script to predict the mode based on a trained model.
   - Sociodemographic Imputation: R markdown codes for assigning an age, gender, and income category to each device ID, based on imputed home Census Block Group.
-  - Trip Identification: R script to identify which device points form a trio together.
+  - Trip Identification: R script to identify which device points form a trip together.
 
 * Truck OD: codes that were developed to produce OD tables for truck trips.
-  - Trip_Chaining: Python script to chain truck trips based on stop attributes.
+  - Trip_Chaining: Python script to chain truck trips based on truck parking lots and gas stations.
 

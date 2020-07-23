@@ -1,3 +1,4 @@
+The Python script evaluates the unlinked truck trips identified from the GPS data, and chains truck trips according to their trip ends and a set of additional rules. With trip chaining, the long-haul truck trips that are originally separated into several shorter trips could be recovered.
 
 User-defined function list:
 - prepare_trip_ends(trip_roster_file, colname_file):
