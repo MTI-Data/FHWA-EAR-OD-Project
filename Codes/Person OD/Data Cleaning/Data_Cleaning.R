@@ -5,7 +5,7 @@ Raw_Data_Path="Raw Data directoy"
 #Getting the list of raw data files
 Raw_Data_list=list.files(path=Raw_Data_Path,full.names = TRUE)
 #Column name in the data
-Column_name=c("Timestamp","Device_ID","ID_Type","Latitude","Longitude","Accuracy","Time_zone_offset")
+Column_name=c("Timestamp","Device_ID","Latitude","Longitude","Accuracy","Time_zone_offset") #based on raw data schema
 #Integrating one month of data
 monthly_raw_data=data.table()
 for( i in 1:length(Raw_Data_list)){
